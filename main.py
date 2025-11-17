@@ -1,14 +1,12 @@
 import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 from typing import List, Optional
-from bson import ObjectId
 
 from database import db, create_document, get_documents
-from schemas import GrainProduct, Inquiry
+from schemas import GrainProduct, Inquiry, PhotographyService, Booking
 
-app = FastAPI(title="Grain Business API")
+app = FastAPI(title="Business API")
 
 app.add_middleware(
     CORSMiddleware,
@@ -20,11 +18,11 @@ app.add_middleware(
 
 @app.get("/")
 def read_root():
-    return {"message": "Grain Business API is running"}
+    return {"message": "Backend API is running"}
 
 @app.get("/api/hello")
 def hello():
-    return {"message": "Hello from the Grain backend API!"}
+    return {"message": "Hello from the backend API!"}
 
 @app.get("/test")
 def test_database():
@@ -63,7 +61,7 @@ def serialize_doc(doc: dict):
     doc.pop("_id", None)
     return doc
 
-# Products endpoints
+# -------------------- Grain Business Endpoints --------------------
 
 @app.post("/api/products", response_model=dict)
 async def create_product(product: GrainProduct):
@@ -81,8 +79,6 @@ async def list_products(limit: Optional[int] = 50):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# Inquiries endpoints
-
 @app.post("/api/inquiries", response_model=dict)
 async def create_inquiry(inquiry: Inquiry):
     try:
@@ -96,6 +92,89 @@ async def list_inquiries(limit: Optional[int] = 100):
     try:
         docs = get_documents("inquiry", {}, limit)
         return [serialize_doc(d) for d in docs]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# -------------------- Photography/Videography Endpoints --------------------
+
+@app.post("/api/services", response_model=dict)
+async def create_service(service: PhotographyService):
+    try:
+        inserted_id = create_document("photographyservice", service)
+        return {"id": inserted_id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/services", response_model=List[dict])
+async def list_services(limit: Optional[int] = 50):
+    try:
+        docs = get_documents("photographyservice", {}, limit)
+        return [serialize_doc(d) for d in docs]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/bookings", response_model=dict)
+async def create_booking(booking: Booking):
+    try:
+        inserted_id = create_document("booking", booking)
+        return {"id": inserted_id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/bookings", response_model=List[dict])
+async def list_bookings(limit: Optional[int] = 100):
+    try:
+        docs = get_documents("booking", {}, limit)
+        return [serialize_doc(d) for d in docs]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/services/seed", response_model=dict)
+async def seed_services():
+    try:
+        # If any services already exist, skip seeding
+        existing = list(db["photographyservice"].find({}).limit(1)) if db else []
+        if existing:
+            return {"status": "ok", "seeded": False}
+        defaults = [
+            {
+                "name": "Free Style",
+                "category": "photography",
+                "price": None,
+                "duration_hours": None,
+                "description": "Creative freestyle photoshoot for personal branding and portfolios.",
+                "image_url": None,
+            },
+            {
+                "name": "Pre-Wedding Shoot",
+                "category": "photography",
+                "price": None,
+                "duration_hours": 4,
+                "description": "Romantic pre-wedding session at scenic locations.",
+                "image_url": None,
+            },
+            {
+                "name": "Candid Photography",
+                "category": "photography",
+                "price": None,
+                "duration_hours": 6,
+                "description": "Natural candid coverage capturing real moments.",
+                "image_url": None,
+            },
+            {
+                "name": "Wedding Photography",
+                "category": "photography",
+                "price": None,
+                "duration_hours": 10,
+                "description": "Full-day wedding coverage with edited album delivery.",
+                "image_url": None,
+            },
+        ]
+        inserted = []
+        for item in defaults:
+            res_id = create_document("photographyservice", item)
+            inserted.append(res_id)
+        return {"status": "ok", "seeded": True, "count": len(inserted)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

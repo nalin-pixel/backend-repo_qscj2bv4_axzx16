@@ -46,6 +46,35 @@ class Inquiry(BaseModel):
     message: Optional[str] = Field(None, description="Additional details")
     status: str = Field("new", description="Status of inquiry: new, contacted, closed")
 
+# Photography business schemas
+
+class PhotographyService(BaseModel):
+    """
+    Photography/Videography services
+    Collection name: "photographyservice"
+    """
+    name: str = Field(..., description="Service name, e.g., Wedding Photography")
+    category: str = Field(..., description="Category, e.g., photography, videography, reels")
+    price: Optional[float] = Field(None, ge=0, description="Base package price in USD")
+    duration_hours: Optional[float] = Field(None, ge=0, description="Estimated duration in hours")
+    description: Optional[str] = Field(None, description="Short description of what's included")
+    image_url: Optional[HttpUrl] = Field(None, description="Hero/cover image for the service")
+
+class Booking(BaseModel):
+    """
+    Customer bookings/orders for photo/video services
+    Collection name: "booking"
+    """
+    name: str = Field(..., description="Client full name")
+    email: str = Field(..., description="Client email")
+    phone: Optional[str] = Field(None, description="Client phone number")
+    service_id: Optional[str] = Field(None, description="Selected service id")
+    service_name: Optional[str] = Field(None, description="Selected service name")
+    event_date: Optional[str] = Field(None, description="Date of event (YYYY-MM-DD)")
+    location: Optional[str] = Field(None, description="Event location")
+    message: Optional[str] = Field(None, description="Additional details or requests")
+    status: str = Field("new", description="Booking status: new, confirmed, completed, cancelled")
+
 # Example schemas kept for reference
 class User(BaseModel):
     name: str
