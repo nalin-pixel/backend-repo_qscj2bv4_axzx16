@@ -11,38 +11,52 @@ Model name is converted to lowercase for the collection name:
 - BlogPost -> "blogs" collection
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, HttpUrl
 from typing import Optional
 
-# Example schemas (replace with your own):
+# Grain business schemas
 
+class GrainProduct(BaseModel):
+    """
+    Grain products available for sale
+    Collection name: "grainproduct"
+    """
+    name: str = Field(..., description="Product name, e.g., Wheat")
+    variety: Optional[str] = Field(None, description="Variety, e.g., Hard Red Winter")
+    grade: Optional[str] = Field(None, description="Quality grade, e.g., Grade 1")
+    price_per_ton: float = Field(..., ge=0, description="Price per metric ton in USD")
+    stock_tons: float = Field(..., ge=0, description="Available stock in metric tons")
+    origin: Optional[str] = Field(None, description="Country/Region of origin")
+    moisture: Optional[float] = Field(None, ge=0, le=100, description="Moisture percentage")
+    protein: Optional[float] = Field(None, ge=0, le=100, description="Protein percentage")
+    description: Optional[str] = Field(None, description="Short description")
+    image_url: Optional[HttpUrl] = Field(None, description="Image URL")
+
+class Inquiry(BaseModel):
+    """
+    Buyer inquiries / RFQs
+    Collection name: "inquiry"
+    """
+    name: str = Field(..., description="Contact name")
+    email: str = Field(..., description="Contact email")
+    phone: Optional[str] = Field(None, description="Phone number")
+    product_name: Optional[str] = Field(None, description="Requested product name")
+    product_id: Optional[str] = Field(None, description="Linked product id if known")
+    quantity_tons: Optional[float] = Field(None, ge=0, description="Requested quantity in tons")
+    message: Optional[str] = Field(None, description="Additional details")
+    status: str = Field("new", description="Status of inquiry: new, contacted, closed")
+
+# Example schemas kept for reference
 class User(BaseModel):
-    """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
-    """
-    name: str = Field(..., description="Full name")
-    email: str = Field(..., description="Email address")
-    address: str = Field(..., description="Address")
-    age: Optional[int] = Field(None, ge=0, le=120, description="Age in years")
-    is_active: bool = Field(True, description="Whether user is active")
+    name: str
+    email: str
+    address: str
+    age: Optional[int] = None
+    is_active: bool = True
 
 class Product(BaseModel):
-    """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
-    """
-    title: str = Field(..., description="Product title")
-    description: Optional[str] = Field(None, description="Product description")
-    price: float = Field(..., ge=0, description="Price in dollars")
-    category: str = Field(..., description="Product category")
-    in_stock: bool = Field(True, description="Whether product is in stock")
-
-# Add your own schemas here:
-# --------------------------------------------------
-
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+    title: str
+    description: Optional[str] = None
+    price: float
+    category: str
+    in_stock: bool = True
